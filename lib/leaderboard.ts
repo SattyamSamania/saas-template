@@ -1,0 +1,5 @@
+import { db } from "@/lib/db";
+export function calculateMinimumBid(topAmount: number | null, highestActiveReservation = 0) { return Math.max((topAmount ?? 0) + 100, highestActiveReservation + 100, 100); }
+export async function getCurrentLeaderboardState() { const entries=await db.leaderboardEntry.findMany({where:{status:"PAID",visibility:"VISIBLE"},orderBy:[{amount:"desc"},{paidAt:"asc"}],take:50}); return entries.map((entry,index)=>({...entry,rank:index+1})); }
+export async function getMinimumBid() { const [top,active]=await Promise.all([db.leaderboardEntry.findFirst({where:{status:"PAID",visibility:"VISIBLE"},orderBy:[{amount:"desc"},{paidAt:"asc"}],select:{amount:true}}),db.leaderboardEntry.findFirst({where:{status:"PENDING",expiresAt:{gt:new Date()}},orderBy:{amount:"desc"},select:{amount:true}})]); return calculateMinimumBid(top?.amount??null,active?.amount??0); }
+export function formatUsd(cents:number){return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(cents/100)}

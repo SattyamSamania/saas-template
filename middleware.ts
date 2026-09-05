@@ -1,12 +1,3 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
-
-export default clerkMiddleware();
-
-export const config = {
-  matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    // Always run for API routes
-    "/(api|trpc)(.*)",
-  ],
-};
+import { NextResponse } from "next/server";
+export function middleware(request:Request){if(!new URL(request.url).pathname.startsWith('/admin'))return NextResponse.next();const expected=process.env.ADMIN_SECRET;if(!expected)return new NextResponse('Admin not configured',{status:503});const auth=request.headers.get('authorization')||'';if(auth.startsWith('Basic ')){try{const decoded=atob(auth.slice(6));const password=decoded.substring(decoded.indexOf(':')+1);if(password===expected)return NextResponse.next()}catch{}}return new NextResponse('Authentication required',{status:401,headers:{'WWW-Authenticate':'Basic realm="BrandMyWallet Admin"'}})}
+export const config={matcher:['/admin/:path*']};

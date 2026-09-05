@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EntryStatus { PENDING PAID FAILED CANCELLED EXPIRED }
+enum Visibility { VISIBLE HIDDEN }
+
+model LeaderboardEntry {
+  id                    String      @id @default(cuid())
+  name                  String      @db.VarChar(80)
+  walletName            String      @db.VarChar(80)
+  walletAddress         String?     @db.VarChar(180)
+  websiteUrl            String?     @db.VarChar(500)
+  twitterUrl            String?     @db.VarChar(500)
+  imageUrl              String?     @db.VarChar(500)
+  tagline               String?     @db.VarChar(180)
+  amount                Int
+  currency              String      @default("USD") @db.VarChar(3)
+  status                EntryStatus @default(PENDING)
+  visibility            Visibility  @default(VISIBLE)
+  dodoPaymentId         String?     @unique
+  dodoCheckoutSessionId String?     @unique
+  webhookProcessedAt    DateTime?
+  expiresAt             DateTime?
+  paidAt                DateTime?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@index([status, visibility, amount, paidAt])
+  @@index([status, expiresAt])
+}
+
+model CheckoutLock {
+  id        Int      @id @default(1)
+  version   Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
